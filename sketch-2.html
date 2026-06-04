@@ -301,23 +301,34 @@
     function selectTrack(track) {
       resultsList.style.display = 'none';
       searchInput.value = '';
-      const energy       = track.popularity / 100;
-      const dur          = track.duration_ms;
-      const acousticness = Math.min(1, Math.max(0, (dur - 120000) / 360000));
-      const valence      = hashToFloat(track.id);
-      const tempo        = 70 + energy * 110;
+
+      // Energy: from popularity — varies widely between songs
+      const energy = track.popularity / 100;
+
+      // Valence → hue: use the seconds part of duration (0–59 → 0–1)
+      // This gives genuine hue variation: a 3m42s track vs a 4m07s track
+      // will produce very different colours
+      const durationSec = Math.floor(track.duration_ms / 1000);
+      const valence = (durationSec % 60) / 59;
+
+      // Acousticness: longer tracks tend to be more mellow
+      const durationMin = track.duration_ms / 60000;
+      const acousticness = Math.min(1, Math.max(0, (durationMin - 1.5) / 5.5));
+
+      // Tempo: correlated with energy
+      const tempo = 65 + energy * 115;
+
       applyFeatures({ valence, energy, acousticness, tempo }, track.name, track.artists[0].name);
     }
   </script>
 
   <script>
     // ════════════════════════════════════════════════════════════════
-    //  P5.JS SKETCH
+    //  P5.JS SKETCH — Space Visualiser
     // ════════════════════════════════════════════════════════════════
 
-    // ── SHARED STATE (updated by selectTrack) ────────────────────────
-    // Lerped toward target each frame
-    let cur = { valence: 0.25, energy: 0.18, acousticness: 0.85, hue: 248 };
+    // ── SHARED STATE ─────────────────────────────────────────────
+    let cur = { valence: 0.1, energy: 0.1, acousticness: 0.9, hue: 240 };
     let tgt = { ...cur };
     let lerpSpd  = 0.035;
     let trackName  = '';
@@ -325,95 +336,94 @@
     let noTrack    = true;
 
     function applyFeatures(f, name, artist) {
-      console.log('applyFeatures called:', f, name, artist);
       tgt.valence      = f.valence;
       tgt.energy       = f.energy;
       tgt.acousticness = f.acousticness;
       tgt.hue          = hueFromValence(f.valence);
-      // Higher tempo → slightly snappier onset (easing curve effect)
-      lerpSpd = 0.008 + (f.tempo - 40) / (200 - 40) * 0.012;
-      lerpSpd = Math.min(0.020, Math.max(0.007, lerpSpd));
+      lerpSpd = Math.min(0.045, Math.max(0.025, 0.025 + (f.tempo - 40) / 160 * 0.02));
       trackName  = name;
       artistName = artist;
       noTrack    = false;
     }
 
     function hueFromValence(v) {
-      // 0 → 252 (deep blue-violet)  1 → 32 (warm amber)
-      return 252 - v * 220;
+      // Cycles through real space/nebula colours — avoids green entirely
+      // blue-violet (240) → purple (270) → magenta-pink (310) → amber-red (30)
+      return (240 + v * 150) % 360;
     }
 
-    // ── STARS ────────────────────────────────────────────────────────
-    let stars = [];
-    const N_STARS = 270;
+    // ── STAR / NEBULA ARRAYS ──────────────────────────────────────
+    let bgStars    = [];  // always-visible pin-prick background field
+    let fgStars    = [];  // energy-driven main star field
+    let heroStars  = [];  // bright feature stars with bloom
+    let nebParticles = []; // nebula cloud particles
 
-    function initStars(p) {
-      stars = Array.from({ length: N_STARS }, (_, i) => {
-        const tier = i < N_STARS * 0.62 ? 0 : i < N_STARS * 0.87 ? 1 : 2;
-        return {
-          nx: Math.random(),
-          ny: Math.random(),
-          z:  Math.random(),
-          tier,
-          sz:  tier === 0 ? p.random(0.6, 1.5) : tier === 1 ? p.random(1.6, 3.0) : p.random(3.2, 5.8),
-          tw:  p.random(1000),
-          hShift: p.random(-18, 18),
-        };
-      });
-    }
-
-    // ── NEBULA PARTICLES ─────────────────────────────────────────────
-    let nebula = [];
-    const N_NEB = 220;
-
-    function initNebula(p) {
-      nebula = Array.from({ length: N_NEB }, () => {
-        const angle = Math.random() * Math.PI * 2;
-        const r     = Math.pow(Math.random(), 0.45); // bias toward center
-        return {
-          nx:    r * Math.cos(angle),
-          ny:    r * Math.sin(angle) * 0.62, // vertical squash
-          seed:  p.random(2000),
-          layer: Math.floor(Math.random() * 3),
-        };
-      });
-    }
-
-    // ── P5 INSTANCE ──────────────────────────────────────────────────
     new p5(function(p) {
 
       p.setup = function() {
         p.createCanvas(p.windowWidth, p.windowHeight);
         p.colorMode(p.HSB, 360, 100, 100, 100);
         p.noStroke();
-        initStars(p);
-        initNebula(p);
+        buildField();
       };
 
       p.windowResized = function() {
         p.resizeCanvas(p.windowWidth, p.windowHeight);
+        buildField();
       };
 
-      // ── DRAW LOOP ───────────────────────────────────────────────────
+      function buildField() {
+        // Background pin-prick stars — always visible, very faint
+        bgStars = Array.from({ length: 130 }, () => ({
+          x: p.random(), y: p.random(),
+          sz: p.random(0.3, 0.85),
+          a: p.random(12, 35),
+        }));
+
+        // Main star field — count scales with energy
+        fgStars = Array.from({ length: 230 }, () => ({
+          x: p.random(), y: p.random(),
+          z: p.random(0.1, 1.0),   // depth for parallax
+          sz: p.random(0.8, 2.6),
+          tw: p.random(p.TWO_PI),  // twinkle phase
+        }));
+
+        // Hero / feature stars — always present, large with glow halo
+        heroStars = Array.from({ length: 9 }, () => ({
+          x: p.random(), y: p.random(),
+          sz: p.random(3.5, 6.5),
+          tw: p.random(p.TWO_PI),
+        }));
+
+        // Nebula cloud — random particles distributed in an ellipse
+        nebParticles = Array.from({ length: 260 }, () => {
+          const angle = p.random(p.TWO_PI);
+          const r = Math.pow(p.random(), 0.45); // bias toward centre
+          return {
+            nx:    r * Math.cos(angle),
+            ny:    r * Math.sin(angle) * 0.55,  // vertical squash
+            seed:  p.random(4000),
+            layer: Math.floor(p.random(3)),     // 0=outer 1=mid 2=inner
+          };
+        });
+      }
+
+      // ── DRAW LOOP ───────────────────────────────────────────────
       p.draw = function() {
-        // Lerp state toward target
         cur.valence      = p.lerp(cur.valence,      tgt.valence,      lerpSpd);
         cur.energy       = p.lerp(cur.energy,        tgt.energy,       lerpSpd);
         cur.acousticness = p.lerp(cur.acousticness,  tgt.acousticness, lerpSpd);
         cur.hue          = lerpHue(cur.hue, tgt.hue, lerpSpd);
 
-        // Background
-        const bgB = p.map(cur.energy, 0, 1, 3, 11);
-        const bgS = p.map(cur.valence, 0, 1, 55, 35);
-        p.background(cur.hue, bgS, bgB);
-
+        drawBackground();
         drawNebula();
-        drawStars();
+        drawBgStars();
+        drawFgStars();
+        drawHeroStars();
         drawPortrait();
         if (noTrack) drawPrompt();
       };
 
-      // ── HELPERS ─────────────────────────────────────────────────────
       function lerpHue(a, b, t) {
         let d = b - a;
         if (d >  180) d -= 360;
@@ -421,125 +431,151 @@
         return (a + d * t + 360) % 360;
       }
 
-      // ── NEBULA ──────────────────────────────────────────────────────
+      // ── BACKGROUND — deep space, nearly black ───────────────────
+      function drawBackground() {
+        // Very dark base. Subtle hue tint so colour shifts read clearly.
+        const bri = p.map(cur.energy, 0, 1, 3, 10);
+        const sat = p.map(cur.valence, 0, 1, 55, 30);
+        p.background(cur.hue, sat, bri);
+      }
+
+      // ── NEBULA ──────────────────────────────────────────────────
+      // Three particle layers at different hue offsets simulate real
+      // emission/reflection nebula colour banding.
       function drawNebula() {
-        const t   = p.frameCount * 0.00035;
+        const t   = p.frameCount * 0.00025;
         const cx  = p.width  * 0.5;
         const cy  = p.height * 0.455;
-        const maxR = Math.min(p.width, p.height) * 0.33;
+        const maxR = Math.min(p.width, p.height) * 0.38;
 
-        const soft = p.map(cur.acousticness, 0, 1, 0.65, 1.35);
-        const bri  = p.map(cur.energy,       0, 1, 18,   62);
-        const sat  = p.map(cur.valence,      0, 1, 72,   48);
+        // acousticness: high → diffuse/large; low → tight/compact
+        const soft = p.map(cur.acousticness, 0, 1, 0.55, 1.45);
+        // energy: drives brightness and saturation
+        const bri  = p.map(cur.energy, 0, 1, 22, 78);
+        const sat  = p.map(cur.energy, 0, 1, 50, 90);
 
-        const hShifts = [0, 18, -12];
+        // Hue offsets per layer — outer shifts cooler, inner warmer
+        const hOff = [-25, 0, 28];
+        // Alpha weight per layer
+        const aW   = [0.65, 1.0, 0.5];
 
-        for (const pt of nebula) {
-          const n     = p.noise(pt.seed * 0.5 + t, pt.seed * 0.3 + t * 0.65);
-          const dist  = Math.sqrt(pt.nx * pt.nx + pt.ny * pt.ny);
-          const fall  = Math.max(0, 1 - dist);
-          const alpha = n * fall * fall * 32 * soft;
-          if (alpha < 0.8) continue;
+        for (const pt of nebParticles) {
+          const n    = p.noise(pt.seed * 0.35 + t, pt.seed * 0.22 + t * 0.58);
+          const dist = Math.sqrt(pt.nx * pt.nx + pt.ny * pt.ny);
+          const fall = Math.max(0, 1 - dist);
+          const alpha = n * fall * fall * 40 * soft * aW[pt.layer];
+          if (alpha < 0.7) continue;
 
-          const h  = (cur.hue + hShifts[pt.layer] + 360) % 360;
-          const stretch = 0.75 + n * 0.55;
-          const x  = cx + pt.nx * maxR * stretch;
-          const y  = cy + pt.ny * maxR * stretch;
-          const sz = maxR * 0.38 * soft * (0.25 + n * 0.75);
+          const h     = (cur.hue + hOff[pt.layer] + 360) % 360;
+          const str   = 0.65 + n * 0.7;
+          const x     = cx + pt.nx * maxR * str;
+          const y     = cy + pt.ny * maxR * str;
+          const sz    = maxR * 0.44 * soft * (0.18 + n * 0.82);
 
           p.fill(h, sat, bri, alpha);
           p.ellipse(x, y, sz, sz * 0.78);
         }
 
-        // Central core glow
-        const coreAlpha = p.map(cur.energy, 0, 1, 8, 22);
-        p.fill(cur.hue, sat * 0.55, bri * 1.15, coreAlpha);
-        p.ellipse(cx, cy, maxR * 0.28 * soft, maxR * 0.18 * soft);
+        // Bright glowing core
+        p.fill(cur.hue, sat * 0.45, Math.min(100, bri * 1.5),
+               p.map(cur.energy, 0, 1, 5, 20));
+        p.ellipse(cx, cy, maxR * 0.2 * soft, maxR * 0.12 * soft);
       }
 
-      // ── STARS ────────────────────────────────────────────────────────
-      function drawStars() {
-        const visibleCount = Math.floor(p.map(cur.energy, 0, 1, 55, N_STARS));
-        const t = p.frameCount * 0.0009;
-
-        for (let i = 0; i < visibleCount; i++) {
-          const s = stars[i];
-          // Parallax: deeper stars (high z) drift more slowly
-          const px = (s.nx + Math.sin(t * 0.28 + s.z * 4) * s.z * 0.018) * p.width;
-          const py = (s.ny + Math.cos(t * 0.22 + s.z * 3) * s.z * 0.013) * p.height;
-
-          const twinkle = 0.72 + 0.28 * Math.sin(t * 2.8 + s.tw);
-          const baseAlpha = s.tier === 0 ? 52 : s.tier === 1 ? 72 : 88;
-          const alpha = baseAlpha * twinkle * p.map(cur.energy, 0, 1, 0.35, 1.0);
-
-          const h   = (cur.hue + s.hShift + 360) % 360;
-          const sat = p.map(cur.valence, 0, 1, 18, 8);
-          const bri = s.tier === 2 ? 100 : s.tier === 1 ? 94 : 86;
-
-          p.fill(h, sat, bri, alpha);
-          const sz = s.sz * twinkle;
-          p.ellipse(px, py, sz, sz);
-
-          // Halo on large stars
-          if (s.tier === 2) {
-            p.fill(h, sat * 0.4, 100, alpha * 0.12);
-            p.ellipse(px, py, sz * 5, sz * 5);
-          }
+      // ── BACKGROUND STARS — faint, always on ─────────────────────
+      function drawBgStars() {
+        for (const s of bgStars) {
+          // Very slight hue tint so they blend with the nebula colour
+          p.fill(cur.hue, 10, 94, s.a);
+          p.ellipse(s.x * p.width, s.y * p.height, s.sz, s.sz);
         }
       }
 
-      // ── DATA PORTRAIT ────────────────────────────────────────────────
+      // ── FOREGROUND STARS — count driven by energy ────────────────
+      function drawFgStars() {
+        const count = Math.floor(p.map(cur.energy, 0, 1, 25, fgStars.length));
+        const t = p.frameCount * 0.001;
+
+        for (let i = 0; i < count; i++) {
+          const s = fgStars[i];
+          const twinkle = 0.6 + 0.4 * Math.sin(t * 2.6 + s.tw);
+          const alpha = 70 * twinkle * p.map(cur.energy, 0, 1, 0.35, 1.0);
+
+          // Subtle parallax: deeper stars drift slightly more slowly
+          const x = (s.x + Math.sin(t * 0.28 + s.z * 5) * s.z * 0.011) * p.width;
+          const y = (s.y + Math.cos(t * 0.22 + s.z * 4) * s.z * 0.008) * p.height;
+
+          // Stars are mostly white — just a whisper of the nebula hue
+          p.fill(cur.hue, 7, 98, alpha);
+          p.ellipse(x, y, s.sz * twinkle, s.sz * twinkle);
+        }
+      }
+
+      // ── HERO STARS — bright points with layered bloom ───────────
+      function drawHeroStars() {
+        const t = p.frameCount * 0.0007;
+        for (const s of heroStars) {
+          const twinkle = 0.82 + 0.18 * Math.sin(t * 1.6 + s.tw);
+          const x = s.x * p.width;
+          const y = s.y * p.height;
+          const sz = s.sz * twinkle;
+
+          // Three-ring bloom: outer dim hued glow, mid near-white, core pure white
+          p.fill(cur.hue, 20, 100, 6);
+          p.ellipse(x, y, sz * 8, sz * 8);
+          p.fill(cur.hue, 8,  100, 16);
+          p.ellipse(x, y, sz * 3.5, sz * 3.5);
+          p.fill(0, 0, 100, 92 * twinkle);
+          p.ellipse(x, y, sz, sz);
+        }
+      }
+
+      // ── DATA PORTRAIT ────────────────────────────────────────────
       function drawPortrait() {
-        const mx = 32;
-        const my = p.height - 32;
-        const r  = 20;
+        const mx = 34;
+        const r  = 19;
+        const my = p.height - 34 - r - 22;
 
         p.push();
-        p.translate(mx, my - r - 18);
+        p.translate(mx, my);
         p.noFill();
 
-        // Valence arc (outer)
+        // Outer arc: valence (hue of current environment)
         p.strokeWeight(1.2);
-        p.stroke(cur.hue, 58, 88, 48);
+        p.stroke(cur.hue, 68, 90, 55);
         p.arc(0, 0, r * 2, r * 2, -p.HALF_PI,
               -p.HALF_PI + cur.valence * p.TWO_PI);
 
-        // Energy arc (inner)
-        p.stroke((cur.hue + 22) % 360, 48, 80, 42);
-        p.arc(0, 0, r * 1.3, r * 1.3, -p.HALF_PI,
+        // Inner arc: energy
+        p.stroke((cur.hue + 35) % 360, 58, 82, 48);
+        p.arc(0, 0, r * 1.28, r * 1.28, -p.HALF_PI,
               -p.HALF_PI + cur.energy * p.TWO_PI);
 
-        // Track info
         if (!noTrack) {
           p.noStroke();
           p.textFont('Courier New');
           p.textAlign(p.LEFT, p.TOP);
-
           p.textSize(9);
-          p.fill(0, 0, 88, 52);
-          p.text(truncate(trackName, 24),  -r, r + 12);
-
+          p.fill(0, 0, 90, 58);
+          p.text(trunc(trackName, 22),  -r, r + 12);
           p.textSize(8);
-          p.fill(0, 0, 65, 38);
-          p.text(truncate(artistName, 24), -r, r + 23);
+          p.fill(0, 0, 62, 40);
+          p.text(trunc(artistName, 22), -r, r + 24);
         }
-
         p.pop();
       }
 
-      function truncate(str, n) {
-        return str.length > n ? str.slice(0, n) + '…' : str;
-      }
+      function trunc(s, n) { return s.length > n ? s.slice(0, n) + '…' : s; }
 
-      // ── PROMPT (shown before first track) ────────────────────────────
+      // ── PROMPT — shown before first track selected ───────────────
       function drawPrompt() {
         p.push();
         p.noStroke();
-        p.fill(0, 0, 75, 18);
+        p.fill(0, 0, 72, 18);
         p.textFont('Courier New');
         p.textSize(10);
         p.textAlign(p.CENTER, p.CENTER);
-        p.text('search for a song below', p.width / 2, p.height / 2 + 90);
+        p.text('search for a song below', p.width / 2, p.height / 2 + 95);
         p.pop();
       }
 
