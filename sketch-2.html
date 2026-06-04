@@ -277,7 +277,7 @@
         el.innerHTML = `
           <div class="result-name">${track.name}</div>
           <div class="result-artist">${track.artists[0].name}</div>`;
-        el.addEventListener('click', () => selectTrack(track));
+        el.addEventListener('mousedown', (e) => { e.preventDefault(); selectTrack(track); });
         resultsList.appendChild(el);
       });
       resultsList.style.display = 'block';
@@ -319,12 +319,13 @@
     // Lerped toward target each frame
     let cur = { valence: 0.25, energy: 0.18, acousticness: 0.85, hue: 248 };
     let tgt = { ...cur };
-    let lerpSpd  = 0.010;
+    let lerpSpd  = 0.035;
     let trackName  = '';
     let artistName = '';
     let noTrack    = true;
 
     function applyFeatures(f, name, artist) {
+      console.log('applyFeatures called:', f, name, artist);
       tgt.valence      = f.valence;
       tgt.energy       = f.energy;
       tgt.acousticness = f.acousticness;
