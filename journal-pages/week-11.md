@@ -1,24 +1,41 @@
----
-layout: default
----
+## Week 11
 
-# Week 11
+Week eleven was the final studio session before the showcase and submission deadline, structured around three activities that shifted the focus from development to consolidation: a journal review, practice consultations, and showcase planning. With the assignment due Thursday 04 June and the showcase on Friday 05 June, the session had the quality of a final check — less about generating new directions and more about ensuring everything already made was as resolved as it could be.
 
-[← Back to Home](../index.md)
+### Journal Review
 
-## Documentation 
+The session opened with a paired journal review using the Journal Checklist. Working with a partner, I read through their entries for weeks 6–10 and provided observations on clarity and completeness, the balance of visuals and text, and technical implementation — file structure, image paths, Markdown consistency, and whether the site was rendering correctly on GitHub Pages. My partner's journal was well-structured overall, with strong reflective writing in the critique weeks. The main observation I offered was that the week 7 entry would benefit from more specific description of the making sprint outcome — the technical work was implied rather than described, which made it harder to assess the progression from that sprint into week 8.
 
-*Include your documentation for the week. Devise your own structure of headings relevant to the required tasks and your process.*
+The feedback I received in return was similarly focused on specificity. My partner noted that the entries read as consistently strong in conceptual reflection but that some of the technical sections — particularly around the OAuth implementation in weeks 10 and 11 — were detailed enough to risk losing a non-technical reader. Their suggestion was to frame the technical explanations around what they enabled rather than how they worked, which is a useful editorial instinct for the journal as a public-facing document. I took this on board and made minor revisions to those passages in the independent study period.
 
-## Images & Media
+Re-reading my own entries in preparation for the Studio Consultation, I identified three key moments that shaped the project's direction. The first was the Week 06 Proposal Consultation, where the teacher's question about intended impact pushed me to articulate the critical framing — that the visualisation would render Spotify's algorithmic interpretation of mood rather than a neutral portrait of the music — which became the conceptual anchor for everything that followed. The second was the Week 08 Critical Design Proposition, where the data portrait idea emerged from a partner's response to the screensaver problem: the suggestion to add a second visual register that made the data logic visible alongside the immersive environment resolved a tension I had not found a way through on my own. The third was the Week 10 Padlet feedback from the Conceptual Commenter, who suggested replacing variable transition duration with a tempo-driven easing curve — a technically small change that meaningfully extended the piece's critical coherence by encoding more of the data into the viewer's experience.
 
-*Use the format below to embed images from your assets folder:*
+### Practice Consultations
 
-`![Alt text](../assets/week-01/your-image.jpg)`
-`*Your caption here*`
+The practice consultations ran as two paired rounds of ten minutes each, using the six question prompts from the slides as a guide rather than a script. In the first round I was interviewed by a partner I had not worked closely with before, which produced more genuinely exploratory conversation than I had expected. The questions I found most straightforward to answer were the theme and data source questions — six weeks of development means the project description is well-rehearsed at this point. The question about key moments in the design journey produced the most substantive response: the data portrait and the Week 06 critical reframing both came up naturally and connected to each other in the telling, which confirmed that the project narrative has coherence across its development arc.
 
-*The text inside the square brackets is alt text (a description for accessibility), not a visible caption. To add a caption, place a line of italic text below the image.*
+The harder question was the one about challenging conventional ideas. The honest answer is that the piece challenges the convention that data visualisation is a form of neutral representation — by making the algorithmic subjectivity of Spotify's mood scores visible and inhabitable, it asks the viewer to experience data interpretation as an act of authorship rather than measurement. I could articulate this in the consultation but found myself reaching for the same phrases from the project statement, which suggested the critical framing was not yet fully internalised as conversational thought. This was the most useful observation to take into the actual Studio Consultation.
 
-## AI Usage Statement
+The self-reflection after the first round identified two things to work on: grounding abstract claims in specific examples from the making process, and allowing the conversation to move between the technical and conceptual registers fluidly rather than treating them as separate tracks. In the second round with a new partner I focused on both. Describing the data portrait as a specific design decision — why it is in the bottom-left, why the arcs are thin and semi-transparent, what happens to them when the valence is very low — made the critical framing more concrete and the conversation more alive. The second round felt significantly more like the kind of discussion the Studio Consultation is designed to be.
 
-*Document any use of AI tools under an AI Usage Statement heading. Explain which tools you used and describe how you used them. Reference any AI-generated content (see [QuickCite](https://auckland.libguides.com/referencing-generative-ai-tools) for guidance).*
+### Showcase Planning
+
+The showcase planning activity involved adding to the Miro board to mark a preferred installation position in the studio for Friday 05 June. The piece runs in a browser and requires a laptop and power supply — no additional hardware beyond what I will bring. The installation plan is to position the laptop on a table near a wall outlet with the screen facing toward the room, with the project statement printed and placed adjacent to the display. A central table position was selected on the Miro board after checking that no one else had claimed the same spot, and I confirmed the plan via the class Discord channel.
+
+The practical checklist for the showcase: laptop fully charged with power adapter, browser set to full-screen mode with the sketch running, Spotify account logged in and OAuth flow completed before installation begins, project statement printed at A4 in the same monospace typeface as the data portrait, and the GitHub Pages site live with the Week 11 journal entry published before the Thursday 23:59 deadline.
+
+### Independent Study
+
+#### Project Finalisation
+
+The independent study period was the final development window before submission. The main tasks were polishing the visual quality of the artefact, finalising the project statement, and completing the journal.
+
+For the artefact, the star field rendering was refined by introducing three size tiers — small, medium, and large stars — each with slightly different brightness ranges and noise-driven flicker rates. This produces a more naturalistic sense of depth than a uniform size distribution and makes the canvas feel genuinely populated at large display sizes. The data portrait arc strokes were given a subtle glow effect using multiple concentric draw calls at decreasing opacity, which integrates them more cohesively with the luminous quality of the space environment without drawing the eye away from it. A final round of testing on Chrome and Firefox at 1920×1080 confirmed all components were rendering correctly and all interaction paths — successful search, empty search, failed authentication, idle fallback — were behaving as intended.
+
+The project statement was finalised by incorporating the minor editorial adjustments suggested in the journal review feedback: the description of the search interaction and the dissolve transition were made more specific, and the final sentence was revised to foreground the intended experiential quality of the piece — that the viewer inhabits the algorithm's interpretation rather than observes it. The statement was exported as a PDF formatted to match the visual language of the data portrait: monospace typeface, minimal layout, black on white.
+
+The journal was reviewed against the checklist criteria — all six entries present, consistent Markdown formatting, images stored in the correct asset directories, all links working, site published and rendering correctly — and the GitHub repository was committed and pushed before the Thursday 23:59 deadline.
+
+#### Studio Consultation Preparation
+
+In preparation for the Studio Consultation, I re-read the grading rubric and the practice consultation notes from class. The A-range criteria centre on consistently purposeful engagement, a cohesive narrative maintained across different questions, and strong critical understanding of the work's position in relation to existing ideas about data representation. The practice consultation identified the critical positioning question as the one most in need of development, and the revision I made was to prepare two or three specific examples from the making process that instantiate the broader critical claim — that data visualisation is never neutral, and that making the algorithm's subjectivity visible is itself a design act. These examples — the data portrait, the valence-to-colour-temperature mapping, the decision to acknowledge Spotify's opacity in the project statement — each embody the argument in concrete terms and give the conversation something specific to move through rather than circling a general proposition.

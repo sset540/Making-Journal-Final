@@ -1,24 +1,39 @@
----
-layout: default
----
+## Week 07
 
-# Week 07
+Week seven was the first full development studio of the project phase, structured around three in-class activities — concept sketches, a making sprint, and 'what if' variations — followed by independent study focused on project development and preparing a progress report for next week. The session was framed around rapid prototyping: short cycles of focused making with an experimental rather than polished mindset.
 
-[← Back to Home](../index.md)
+### Concept Sketches
 
-## Documentation 
+The class began with fifteen minutes to develop the concept sketch further before sharing it with the room. I refined the sketch from Week 06, adding more detailed annotations about how specific Spotify audio feature values would map to specific visual properties. The key mappings I annotated were: valence controlling the overall colour temperature of the scene (low valence pushing toward cool blue and violet tones, high valence shifting toward warm amber and gold), energy controlling star density and brightness, tempo controlling the speed of particle and nebula movement, and acousticness controlling the softness and diffusion of the nebula edges. I also added a note about the overall canvas behaviour — at very low energy levels, the scene should feel almost still, with only subtle noise-driven movement, while at high energy levels it should feel alive and kinetic.
 
-*Include your documentation for the week. Devise your own structure of headings relevant to the required tasks and your process.*
+Once sketches were displayed, the class circulated the room leaving post-it note responses. The responses I received were varied and useful. One observation noted that the mapping between valence and colour temperature was intuitive and visually compelling — that the shift from cool to warm space felt emotionally legible without needing explanation. A second post-it questioned how the piece would handle songs that are high energy but low valence — aggressive or dark music — since those might produce a warm, energetic visual that contradicts the emotional character of the track. A third response asked whether the viewer would be able to interact with the piece or whether they would purely observe it.
 
-## Images & Media
+These questions were genuinely productive. The high-energy, low-valence problem is real — loudness and instrumentalness might be better secondary variables for distinguishing aggressive tracks from euphoric ones. After reading through the post-its I redrew the sketch to incorporate a secondary colour dimension: saturation would be driven by a combination of energy and valence together, so that dark-energetic music would produce desaturated, fast, cold visuals rather than warm ones. This felt like a more honest mapping of mood to visual atmosphere.
 
-*Use the format below to embed images from your assets folder:*
+### Making Sprint
 
-`![Alt text](../assets/week-01/your-image.jpg)`
-`*Your caption here*`
+The making sprint was a focused 45-minute session to produce a first hands-on experiment with the dataset and visualisation approach. The goal was a testable outcome, not a finished one, so I set a specific goal: get Spotify audio feature data flowing into p5.js and have at least one visual property responding to a real data value.
 
-*The text inside the square brackets is alt text (a description for accessibility), not a visible caption. To add a caption, place a line of italic text below the image.*
+Building on the API setup work from Week 06 independent study, I had already confirmed that the authentication flow worked and that audio feature data was being returned correctly. This week I moved that connection into a p5.js sketch. I hardcoded an access token temporarily to avoid rebuilding the OAuth flow mid-sprint, then used `fetch()` inside `preload()` to call the Spotify audio features endpoint for a chosen track ID and store the returned values as global variables.
 
-## AI Usage Statement
+Once the data was accessible inside the sketch, I mapped the `energy` value to the number of stars rendered on the canvas and the `valence` value to the hue of the background nebula. Testing with several different tracks produced noticeably different visual outputs — a high-energy dance track filled the canvas with bright, dense stars against a warm amber nebula, while a quiet acoustic folk track rendered a sparse, dim field against a deep blue-purple background. Seeing the visualisation respond to real Spotify data for the first time was a meaningful moment in the project. The core technical approach was confirmed as viable.
 
-*Document any use of AI tools under an AI Usage Statement heading. Explain which tools you used and describe how you used them. Reference any AI-generated content (see [QuickCite](https://auckland.libguides.com/referencing-generative-ai-tools) for guidance).*
+### 'What if' Variations
+
+After the break, the class worked in pairs to share making sprint outcomes and generate 'what if' variations. After walking my partner through the sketch, they proposed three alternative directions. The first was: what if the visualisation responded to a playlist rather than a single track, animating the transition between the emotional worlds of consecutive songs as a continuous journey through space. The second was: what if the viewer could search for any track by name and see its space world generated in real time, turning the piece into an interactive exploration tool. The third was: what if the space contained a planet that grew or shrank based on the popularity of the track, introducing a social data layer alongside the audio features.
+
+I chose to develop the second variation — the search and explore interaction — because it transforms the piece from a passive display into something a viewer can actively use. The provocation shifts from observation to participation: you can find out what your favourite song looks like as a world. I produced a drawing exploring what this UI might look like, annotated with notes about how a search input field might sit minimally at the bottom of the canvas without breaking the immersive quality of the space environment. The drawing also noted that the transition between searched tracks should animate smoothly — a dissolve between two space scenes rather than a hard cut.
+
+### Independent Study
+
+#### Project Development and Skill Building
+
+Following the making sprint, I continued developing the p5.js sketch with two goals: improving the quality of the space environment and beginning to build the search interaction. For the space environment, I refined the nebula generation using layered `noise()` calls at different scales and speeds, which produced a more complex and believable atmospheric form. I also added a subtle parallax effect to the star field — stars at different z-depths move at slightly different rates — which gives the scene a sense of three-dimensional space without requiring WebGL.
+
+For the search interaction, I added a p5.js `createInput()` element at the bottom of the canvas and wired it to the Spotify Search API endpoint, which returns track IDs matching a text query. Selecting a result then triggers a fetch of its audio features and a smooth transition of the visual environment. The transition currently works by linearly interpolating between the previous and new values of each visual property over two seconds using `lerp()`, which produces a gentle cross-fade between two space scenes.
+
+The main technical challenge was managing the asynchronous nature of the API calls alongside p5.js's synchronous draw loop. I resolved this by storing the fetched data in global variables and updating the visual targets only when new data arrives, letting the lerp handle the smooth visual update independently of the data fetch timing.
+
+#### Progress Report
+
+I prepared a five-slide progress report for next week's class. The slides cover: the project concept and the Spotify API as data source; the audio feature mappings and what they control visually; a screenshot of the current p5.js prototype showing two different track environments side by side; the search interaction sketch; and three specific questions I want feedback on. The questions are: whether the search interaction is the right mode of engagement or whether a passive, currently-playing display would be more compelling; whether the colour mapping between valence and temperature feels emotionally accurate or needs refinement; and whether the space environment is visually distinct enough from generic screensaver aesthetics to feel like a considered design work.

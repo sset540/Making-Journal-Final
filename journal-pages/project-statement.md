@@ -1,0 +1,9 @@
+# Project Statement
+
+Every song you listen to has already been interpreted before you hear it. Spotify's audio analysis algorithms assign each track a set of numerical values, valence, energy, acousticness, tempo, that encode the platform's reading of how a song feels. These numbers are invisible to the listener, but they quietly shape what gets recommended, surfaced, and played. This project makes those interpretations visible by rendering them as a world.
+
+This work is an interactive data visualisation built in p5.js that draws on the Spotify Web API to generate a real-time deep space environment driven by a track's audio feature data. Valence, Spotify's measure of emotional positivity, controls the colour temperature of the scene, shifting from cool blue-violet for melancholic tracks to warm amber and gold for euphoric ones. Energy governs star density and brightness, acousticness softens the edges of the nebula forms, and tempo shapes the easing of each transition between environments. A small data portrait in the corner makes the algorithm's output legible: two arcs mapping valence and energy, shifting with every track.
+
+The interaction is simple: search for any song and watch its world materialise. The transition between tracks is a slow dissolve, one space scene fading into another, because shifts between emotional registers rarely feel like hard cuts.
+
+The piece is critically grounded in the opacity of the data it uses. Spotify's valence scores are black-box outputs from models trained on undisclosed data. Two songs a listener might describe as equally melancholic can receive very different scores. The space environment a viewer inhabits is not a neutral portrait of a song but a machine's reading of it, made large and immersive. The intended impact is to make that condition felt rather than merely understood — to give the algorithm's invisible interpretation a form that can be experienced and questioned.
