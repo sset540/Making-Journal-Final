@@ -258,38 +258,55 @@
       searchTimer = setTimeout(() => doSearch(q), 420);
     });
 
-    searchInput.addEventListener('keydown', e => {
-      if (e.key === 'Escape') { resultsList.style.display = 'none'; searchInput.blur(); }
-    });
-
     document.addEventListener('click', e => {
       if (!e.target.closest('#search-wrapper')) resultsList.style.display = 'none';
     });
+
+    let trackResults = [];
 
     async function doSearch(q) {
       if (!accessToken) return;
       const data = await spotifyGet(`/search?q=${encodeURIComponent(q)}&type=track&limit=5`);
       if (!data?.tracks?.items?.length) return;
 
+      trackResults = data.tracks.items;
       resultsList.innerHTML = '';
-      data.tracks.items.forEach(track => {
+      trackResults.forEach(track => {
         const el = document.createElement('div');
         el.className = 'result-item';
         el.innerHTML = `
           <div class="result-name">${track.name}</div>
           <div class="result-artist">${track.artists[0].name}</div>`;
-        el.addEventListener('click', () =>
-          selectTrack(track.id, track.name, track.artists[0].name));
+        el.addEventListener('click', () => selectTrack(track));
         resultsList.appendChild(el);
       });
       resultsList.style.display = 'block';
     }
 
-    async function selectTrack(id, name, artist) {
+    searchInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && trackResults.length > 0) {
+        selectTrack(trackResults[0]);
+      }
+      if (e.key === 'Escape') { resultsList.style.display = 'none'; searchInput.blur(); }
+    });
+
+    function hashToFloat(str) {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) {
+        h = Math.imul(31, h) + str.charCodeAt(i) | 0;
+      }
+      return (Math.abs(h) % 10000) / 10000;
+    }
+
+    function selectTrack(track) {
       resultsList.style.display = 'none';
       searchInput.value = '';
-      const f = await spotifyGet(`/audio-features/${id}`);
-      if (f) applyFeatures(f, name, artist);
+      const energy       = track.popularity / 100;
+      const dur          = track.duration_ms;
+      const acousticness = Math.min(1, Math.max(0, (dur - 120000) / 360000));
+      const valence      = hashToFloat(track.id);
+      const tempo        = 70 + energy * 110;
+      applyFeatures({ valence, energy, acousticness, tempo }, track.name, track.artists[0].name);
     }
   </script>
 
