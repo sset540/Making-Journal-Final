@@ -432,11 +432,15 @@
         return (a + d * t + 360) % 360;
       }
 
-      // ── BACKGROUND — pure deep space black, every frame ─────────
+      // ── BACKGROUND — dark but hue-tinted per song ───────────────
       function drawBackground() {
-        // Always near-black. Space is black. Colour comes from nebula only.
-        // Avoids any hue/NaN issues making the background go white.
-        p.background(0, 0, 5);
+        // Brightness stays very low (3–9%) so it reads as deep space.
+        // Hue and saturation shift with the song — background darkly
+        // echoes the nebula colour without ever becoming light.
+        const h   = isNaN(cur.hue) ? 240 : cur.hue;
+        const sat = p.map(cur.energy, 0, 1, 25, 45);
+        const bri = p.map(cur.energy, 0, 1, 3,  9);
+        p.background(h, sat, bri);
       }
 
       // ── NEBULA ──────────────────────────────────────────────────
