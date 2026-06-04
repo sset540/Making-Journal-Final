@@ -395,8 +395,8 @@
           tw: p.random(p.TWO_PI),
         }));
 
-        // Nebula cloud — random particles distributed in an ellipse
-        nebParticles = Array.from({ length: 260 }, () => {
+        // Nebula cloud — 90 particles is enough for a soft glow without filling the screen
+        nebParticles = Array.from({ length: 90 }, () => {
           const angle = p.random(p.TWO_PI);
           const r = Math.pow(p.random(), 0.45); // bias toward centre
           return {
@@ -440,46 +440,45 @@
       }
 
       // ── NEBULA ──────────────────────────────────────────────────
-      // Three particle layers at different hue offsets simulate real
-      // emission/reflection nebula colour banding.
+      // A soft cloud centred on screen — dark space always visible around it.
+      // Three hue-shifted layers simulate emission/reflection banding.
       function drawNebula() {
-        const t   = p.frameCount * 0.00025;
-        const cx  = p.width  * 0.5;
-        const cy  = p.height * 0.455;
-        const maxR = Math.min(p.width, p.height) * 0.38;
+        const t    = p.frameCount * 0.00025;
+        const cx   = p.width  * 0.5;
+        const cy   = p.height * 0.46;
+        // maxR caps at ~25% of the shorter screen dimension — nebula stays central
+        const maxR = Math.min(p.width, p.height) * 0.25;
 
-        // acousticness: high → diffuse/large; low → tight/compact
-        const soft = p.map(cur.acousticness, 0, 1, 0.55, 1.45);
-        // energy: drives brightness and saturation
-        const bri  = p.map(cur.energy, 0, 1, 22, 78);
-        const sat  = p.map(cur.energy, 0, 1, 50, 90);
+        const soft = p.map(cur.acousticness, 0, 1, 0.7, 1.2);
+        const bri  = p.map(cur.energy,  0, 1, 30, 70);
+        const sat  = p.map(cur.energy,  0, 1, 55, 88);
 
-        // Hue offsets per layer — outer shifts cooler, inner warmer
-        const hOff = [-25, 0, 28];
-        // Alpha weight per layer
-        const aW   = [0.65, 1.0, 0.5];
+        const hOff = [-22, 0, 26];
+        const aW   = [0.6, 1.0, 0.5];
 
         for (const pt of nebParticles) {
           const n    = p.noise(pt.seed * 0.35 + t, pt.seed * 0.22 + t * 0.58);
           const dist = Math.sqrt(pt.nx * pt.nx + pt.ny * pt.ny);
           const fall = Math.max(0, 1 - dist);
-          const alpha = n * fall * fall * 40 * soft * aW[pt.layer];
-          if (alpha < 0.7) continue;
+          // Alpha kept very low — individual particles are nearly transparent
+          // so the accumulation reads as a soft glow, not a solid fill
+          const alpha = n * fall * fall * 7 * soft * aW[pt.layer];
+          if (alpha < 0.3) continue;
 
-          const h     = (cur.hue + hOff[pt.layer] + 360) % 360;
-          const str   = 0.65 + n * 0.7;
-          const x     = cx + pt.nx * maxR * str;
-          const y     = cy + pt.ny * maxR * str;
-          const sz    = maxR * 0.44 * soft * (0.18 + n * 0.82);
+          const h  = (cur.hue + hOff[pt.layer] + 360) % 360;
+          const st = 0.65 + n * 0.65;
+          const x  = cx + pt.nx * maxR * st;
+          const y  = cy + pt.ny * maxR * st;
+          const sz = maxR * 0.4 * soft * (0.2 + n * 0.8);
 
           p.fill(h, sat, bri, alpha);
           p.ellipse(x, y, sz, sz * 0.78);
         }
 
-        // Bright glowing core
-        p.fill(cur.hue, sat * 0.45, Math.min(100, bri * 1.5),
-               p.map(cur.energy, 0, 1, 5, 20));
-        p.ellipse(cx, cy, maxR * 0.2 * soft, maxR * 0.12 * soft);
+        // Subtle central glow — never opaque
+        p.fill(cur.hue, sat * 0.4, Math.min(100, bri * 1.3),
+               p.map(cur.energy, 0, 1, 3, 10));
+        p.ellipse(cx, cy, maxR * 0.22 * soft, maxR * 0.14 * soft);
       }
 
       // ── BACKGROUND STARS — faint, always on ─────────────────────
